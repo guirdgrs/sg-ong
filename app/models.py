@@ -2,7 +2,7 @@ from app.database import Base
 from sqlalchemy import Column, Integer, String, Date, DateTime, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import relationship
 from datetime import datetime
-from database import Base
+from app.database import Base
 
 class Aluno(Base):
     __tablename__ = "alunos"
