@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from app.database import engine, Base, get_db
 from app.models import Aluno
 from app.api import presenca
+from mangum import Mangum
 
 # Cria as tabelas na nova base de dados SQLite
 Base.metadata.create_all(bind=engine)
@@ -35,3 +36,5 @@ def home(request: Request, db: Session = Depends(get_db)):
         name="index.html", 
         context={"alunos": alunos}
     )
+
+handler = Mangum(app)
