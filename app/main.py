@@ -6,9 +6,7 @@ from sqlalchemy.orm import Session
 from app.database import engine, Base, get_db
 from app.models import Aluno
 from app.api import presenca
-from mangum import Mangum
 
-# Cria as tabelas na nova base de dados SQLite
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="SG-ONG API", version="1.0.0")
@@ -28,7 +26,6 @@ def popular_banco_se_vazio(db: Session):
 
 @app.get("/", response_class=HTMLResponse)
 def home(request: Request, db: Session = Depends(get_db)):
-    """Renderiza a interface web com dados vindos da base de dados SQLite"""
     popular_banco_se_vazio(db)
     alunos = db.query(Aluno).all()
     return templates.TemplateResponse(
@@ -37,4 +34,9 @@ def home(request: Request, db: Session = Depends(get_db)):
         context={"alunos": alunos}
     )
 
-handler = Mangum(app)
+# Handler seguro para Vercel e ambiente de testes
+try:
+    from mangum import Mangum
+    handler = Mangum(app)
+except ImportError:
+    handler = None
