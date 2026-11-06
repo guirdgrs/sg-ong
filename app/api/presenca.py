@@ -1,51 +1,43 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Response
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from datetime import datetime, date
 from typing import List
-from datetime import date
 
 from app.database import get_db
-from app.models import RegistroPresenca, Aluno
-from app.schemas import PresencaCreate, PresencaResponse, ChamadaLoteCreate
-from app.services.pdf_service import gerar_relatorio_presenca_pdf
+from app.models import Presenca
+from app.schemas import ChamadaLoteCreate, PresencaResponse
 
-# Instancia o router da API de presenças (com o prefixo /presenca)
-router = APIRouter(prefix="/presenca", tags=["Presenças"])
+router = APIRouter(prefix="/presenca", tags=["Presença"])
 
 @router.post("/lote", response_model=List[PresencaResponse], status_code=status.HTTP_201_CREATED)
-def registrar_chamada_lote(dados_chamada: ChamadaLoteCreate, db: Session = Depends(get_db)):
-    """
-    Registra a chamada de uma turma em lote.
-    Suporta envios em massa gerados pela sincronização offline do PWA.
-    """
+def registrar_presenca_lote(dados: ChamadaLoteCreate, db: Session = Depends(get_db)):
     novos_registros = []
     
-    for item in dados_chamada.registros:
-        # Verifica se já existe chamada gravada para o aluno na mesma data
-        existente = db.query(RegistroPresenca).filter(
-            RegistroPresenca.id_aluno == item.id_aluno,
-            RegistroPresenca.data_aula == item.data_aula
-        ).first()
-
-        if existente:
-            # Atualiza o status se já existir registro prévio
-            existente.status_presenca = item.status_presenca
-            existente.id_educador = item.id_educador
-            novos_registros.append(existente)
-        else:
-            # Cria novo registro
-            novo = RegistroPresenca(
-                id_aluno=item.id_aluno,
-                data_aula=item.data_aula,
-                status_presenca=item.status_presenca,
-                id_educador=item.id_educador
-            )
-            db.add(novo)
-            novos_registros.append(novo)
-
+    for item in dados.registros:
+        # Trata conversão de string para objeto date se necessário
+        data_valida = item.data_aula
+        if isinstance(data_valida, str):
+            try:
+                data_valida = datetime.strptime(item.data_aula, "%Y-%m-%d").date()
+            except ValueError:
+                raise HTTPException(
+                    status_code=400, 
+                    detail=f"Formato de data inválido para o aluno {item.id_aluno}. Use YYYY-MM-DD."
+                )
+        
+        presenca_obj = Presenca(
+            id_aluno=item.id_aluno,
+            data_aula=data_valida,
+            status_presenca=item.status_presenca,
+            id_educador=item.id_educador or 1
+        )
+        db.add(presenca_obj)
+        novos_registros.append(presenca_obj)
+    
     db.commit()
     for reg in novos_registros:
         db.refresh(reg)
-
+        
     return novos_registros
 
 
@@ -66,3 +58,17 @@ def baixar_relatorio_pdf(polo: str = "Polo Centro", turma: str = "Turma A", data
         "Content-Disposition": f"attachment; filename=Relatorio_Assiduidade_{turma}.pdf"
     }
     return Response(content=pdf_content, media_type="application/pdf", headers=headers)
+
+@router.get("/alunos", response_model=List[dict])
+def listar_alunos(db: Session = Depends(get_db)):
+    """Retorna os alunos cadastrados no banco para renderização da chamada."""
+    alunos = db.query(Aluno).all()
+    return [
+        {
+            "id_aluno": a.id_aluno, 
+            "matricula": a.matricula, 
+            "nome": a.nome, 
+            "polo": a.polo, 
+            "turma": a.turma
+        } for a in alunos
+    ]

@@ -1,25 +1,25 @@
-from pydantic import BaseModel, ConfigDict
-from datetime import date, datetime
-from typing import List, Optional
+from pydantic import BaseModel
+from datetime import date
+from typing import List, Union, Optional
 
-# Schemas de Registro de Presença
-BaseModel
 class PresencaCreate(BaseModel):
     id_aluno: int
-    data_aula: date
-    status_presenca: str  # 'Presente', 'Ausente', 'Justificado'
-    id_educador: int
+    data_aula: Union[date, str]
+    status_presenca: str
+    id_educador: Optional[int] = 1
 
-class PresencaResponse(PresencaCreate):
-    id_presenca: int
-    data_registro: datetime
+    class Config:
+        from_attributes = True
 
-    model_config = ConfigDict(from_attributes=True)
-
-# Schema para recebimento de chamada em lote (PWA / Offline Sync)
 class ChamadaLoteCreate(BaseModel):
-    polo_atendimento: str
-    turma: str
-    data_aula: date
-    id_educador: int
     registros: List[PresencaCreate]
+
+class PresencaResponse(BaseModel):
+    id_presenca: Optional[int] = None
+    id_aluno: int
+    data_aula: Union[date, str]
+    status_presenca: str
+    id_educador: Optional[int] = 1
+
+    class Config:
+        from_attributes = True

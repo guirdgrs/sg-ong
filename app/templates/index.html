@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SG-ONG — Registro de Presença</title>
+    <style>
+        :root {
+            --primary: #002B66;
+            --secondary: #0056b3;
+            --bg: #f4f7f6;
+            --surface: #ffffff;
+            --text: #333333;
+            --font-size-base: 16px;
+        }
+
+        /* Alto Contraste */
+        body.high-contrast {
+            --primary: #ffff00;
+            --secondary: #ffff00;
+            --bg: #000000;
+            --surface: #121212;
+            --text: #ffffff;
+        }
+
+        body.high-contrast select, 
+        body.high-contrast input, 
+        body.high-contrast table, 
+        body.high-contrast th, 
+        body.high-contrast td {
+            background-color: #000000 !important;
+            color: #ffffff !important;
+            border-color: #ffffff !important;
+        }
+
+        body.high-contrast .badge-ods { background: #ffff00 !important; color: #000000 !important; }
+        body.high-contrast .btn-primary { background: #ffff00 !important; color: #000000 !important; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            font-size: var(--font-size-base);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .accessibility-bar {
+            max-width: 800px;
+            margin: 0 auto 12px auto;
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+
+        .acc-btn {
+            background: #333;
+            color: #fff;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            border: 1px solid #ccc;
+        }
+
+        header {
+            border-bottom: 2px solid var(--bg);
+            padding-bottom: 16px;
+            margin-bottom: 20px;
+        }
+
+        h1 { color: var(--primary); margin: 6px 0; font-size: 1.6rem; }
+
+        .badge-ods {
+            display: inline-block;
+            background: #e5243b;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .grid-filters {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        label { font-size: 0.85rem; font-weight: 600; display: block; margin-bottom: 4px; }
+        select, input {
+            width: 100%;
+            min-height: 44px; /* Acessibilidade WCAG target size */
+            padding: 8px 12px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 1rem;
+        }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { text-align: left; padding: 12px; border-bottom: 1px solid #eee; }
+        th { background-color: var(--primary); color: white; }
+
+        /* Estilização Dinâmica de Status */
+        tr.status-Ausente { background-color: #ffe6e6; }
+        tr.status-Justificado { background-color: #fff9e6; }
+        tr.status-Presente { background-color: #e6ffe6; }
+
+        .actions {
+            margin-top: 20px;
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+
+        .btn {
+            min-height: 44px;
+            padding: 10px 18px;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 0.95rem;
+        }
+
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-outline { background: transparent; border: 1px solid var(--primary); color: var(--primary); }
+
+        #alert-box {
+            display: none;
+            padding: 12px;
+            margin-top: 16px;
+            border-radius: 6px;
+            font-weight: bold;
+            text-align: center;
+        }
+        .alert-success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .alert-error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+    </style>
+</head>
+<body>
+    <div class="accessibility-bar" aria-label="Ferramentas de Acessibilidade">
+        <button class="acc-btn" onclick="toggleContrast()">👁️ Alto Contraste</button>
+        <button class="acc-btn" onclick="changeFontSize(1)">A+</button>
+        <button class="acc-btn" onclick="changeFontSize(-1)">A-</button>
+    </div>
+
+    <div class="container">
+        <header>
+            <span class="badge-ods">ODS 4 — Educação de Qualidade</span>
+            <h1>SG-ONG — Diário de Classe Eletrônico</h1>
+            <p style="margin: 4px 0 0 0; font-size: 0.9rem;">Polos Comunitários de Ensino</p>
+        </header>
+
+        <div class="grid-filters">
+            <div>
+                <label for="polo">Polo de Atendimento</label>
+                <select id="polo">
+                    <option>Polo Centro</option>
+                    <option>Polo Zona Sul</option>
+                </select>
+            </div>
+            <div>
+                <label for="turma">Turma</label>
+                <select id="turma">
+                    <option>Turma A — Informática</option>
+                    <option>Turma B — Reforço</option>
+                </select>
+            </div>
+            <div>
+                <label for="dataAula">Data da Aula</label>
+                <input type="date" id="dataAula" value="2026-11-05">
+            </div>
+        </div>
+
+        <table id="tabela-chamada">
+            <thead>
+                <tr>
+                    <th>Matrícula</th>
+                    <th>Nome do Aluno</th>
+                    <th>Status de Presença</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for aluno in alunos %}
+                <tr id="row-{{ aluno.id_aluno }}" class="status-Presente">
+                    <td>{{ aluno.matricula }}</td>
+                    <td>{{ aluno.nome_aluno if aluno.nome_aluno else aluno.nome }}</td>
+                    <td>
+                        <select class="select-status" data-aluno="{{ aluno.id_aluno }}" onchange="atualizarCorLinha(this)">
+                            <option value="Presente" selected>Presente</option>
+                            <option value="Ausente">Ausente</option>
+                            <option value="Justificado">Justificado</option>
+                        </select>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div id="alert-box"></div>
+
+        <div class="actions">
+            <button class="btn btn-outline" onclick="window.open('/presenca/relatorio/pdf')">📄 Exportar PDF</button>
+            <button class="btn btn-primary" onclick="sincronizarChamada()">💾 Sincronizar Chamada</button>
+        </div>
+    </div>
+
+    <script>
+        function toggleContrast() {
+            document.body.classList.toggle('high-contrast');
+        }
+
+        let currentFontSize = 16;
+        function changeFontSize(delta) {
+            currentFontSize += delta * 2;
+            document.documentElement.style.setProperty('--font-size-base', currentFontSize + 'px');
+        }
+
+        function atualizarCorLinha(selectElement) {
+            const tr = selectElement.closest('tr');
+            tr.className = 'status-' + selectElement.value;
+        }
+
+        async function sincronizarChamada() {
+            const dataAulaInput = document.getElementById('dataAula').value;
+            const selects = document.querySelectorAll('.select-status');
+            const alertBox = document.getElementById('alert-box');
+
+            if (!dataAulaInput) {
+                alertBox.className = 'alert-error';
+                alertBox.innerText = '❌ Selecione a data da aula antes de sincronizar.';
+                alertBox.style.display = 'block';
+                return;
+            }
+
+            const registros = Array.from(selects).map(s => ({
+                id_aluno: parseInt(s.getAttribute('data-aluno'), 10),
+                data_aula: dataAulaInput, // string em formato YYYY-MM-DD
+                status_presenca: s.value,
+                id_educador: 1
+            }));
+
+            try {
+                const response = await fetch('/presenca/lote', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ registros: registros })
+                });
+
+                if (response.ok || response.status === 201) {
+                    alertBox.className = 'alert-success';
+                    alertBox.innerText = '✅ Chamada sincronizada com sucesso na base de dados!';
+                    alertBox.style.display = 'block';
+                } else {
+                    const errData = await response.json();
+                    console.error('Detalhe do erro de validação:', errData);
+                    alertBox.className = 'alert-error';
+                    alertBox.innerText = '❌ Erro de validação: ' + JSON.stringify(errData.detail || errData);
+                    alertBox.style.display = 'block';
+                }
+            } catch (err) {
+                console.error(err);
+                alertBox.className = 'alert-error';
+                alertBox.innerText = '❌ Erro na comunicação com o servidor.';
+                alertBox.style.display = 'block';
+            }
+        }
+    </script>
+</body>
+</html>
